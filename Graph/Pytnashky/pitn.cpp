@@ -1,6 +1,7 @@
 #include<iostream>
 #include<vector>
 #include<queue>
+#include<set>
 
 using namespace std;
 
@@ -32,51 +33,77 @@ public:
 	}
 	vector<char> findSolution(){
 		priority_queue<status, vector<status>, compare> queue;
+		set<Field> checkedPositions;
 		status startStatus;
 		startStatus.field = start;
 		for (int i = 0; i < FieldSize*FieldSize; i++) if (start[i / FieldSize][i%FieldSize] == 0){
 			startStatus.nullPlace = i;
 			break;
 		}
-		startStatus.evristic = manhetton(start)/*+linealConflicts(start)*/;
+		startStatus.evristic = manhetton(start)+linealConflicts(start);
 		
 		queue.push(startStatus);
+		checkedPositions.insert(startStatus.field);
+		if (checkedPositions.end() == checkedPositions.find(status(status(startStatus, 'd'), 'u').field)){
+			cout << "ok" << endl;
+		}
 		status currentPosition;
-		currentPosition = queue.top();
-		if (!currentPosition.evristic) return currentPosition.pastMoves;
-		queue.pop();
-		if ((currentPosition.nullPlace >= FieldSize)){
-			queue.push(status(currentPosition, 'u'));
-		}
-		if (currentPosition.nullPlace / FieldSize < FieldSize - 1){
-			queue.push(status(currentPosition, 'd'));
-		}
-		if ((currentPosition.nullPlace%FieldSize > 0)){
-			queue.push(status(currentPosition, 'l'));
-		}
-		if ((currentPosition.nullPlace%FieldSize < FieldSize - 1)){
-			queue.push(status(currentPosition, 'r'));
-		}
+		
 		while (true){
 			currentPosition = queue.top();
 			if (!currentPosition.evristic) return currentPosition.pastMoves;
 			queue.pop();
-			if ((currentPosition.pastMoves[currentPosition.pastMoves.size()-1]!='d')
-				&&(currentPosition.nullPlace >= FieldSize)){
-				queue.push(status(currentPosition, 'u'));
+			
+			if ((currentPosition.nullPlace >= FieldSize)){
+				status st(currentPosition, 'u');
+				if (checkedPositions.find(st.field) == checkedPositions.end()){
+					queue.push(st);
+					checkedPositions.insert(st.field);
+				}
 			}
-			if ((currentPosition.pastMoves[currentPosition.pastMoves.size() - 1] != 'u')
-				&& (currentPosition.nullPlace / FieldSize < FieldSize - 1)){
-				queue.push(status(currentPosition, 'd'));
+			if ((currentPosition.nullPlace / FieldSize < FieldSize - 1)){
+				status st(currentPosition, 'd');
+				if (checkedPositions.find(st.field) == checkedPositions.end()){
+					queue.push(st);
+					checkedPositions.insert(st.field);
+				}
 			}
-			if ((currentPosition.pastMoves[currentPosition.pastMoves.size() - 1] != 'r')
-				&& (currentPosition.nullPlace%FieldSize > 0)){
-				queue.push(status(currentPosition, 'l'));
+			if ((currentPosition.nullPlace%FieldSize > 0)){
+				status st(currentPosition, 'l');
+				if (checkedPositions.find(st.field) == checkedPositions.end()){
+					queue.push(st);
+					checkedPositions.insert(st.field);
+				}
 			}
-			if ((currentPosition.pastMoves[currentPosition.pastMoves.size() - 1] != 'l')
-				&& (currentPosition.nullPlace%FieldSize < FieldSize - 1)){
-				queue.push(status(currentPosition, 'r'));
+			if ((currentPosition.nullPlace%FieldSize < FieldSize - 1)){
+				status st(currentPosition, 'r');
+				if (checkedPositions.find(st.field) == checkedPositions.end()){
+					queue.push(st);
+					checkedPositions.insert(st.field);
+				}
 			}
+		}
+	}
+	void checkEvristic(vector<char>& minWay){
+		status* prStatus = new status();
+		prStatus->field = start;
+		for (int i = 0; i < FieldSize*FieldSize; i++) if (prStatus->field[i / FieldSize][i%FieldSize] == 0){
+			prStatus->nullPlace = i;
+			break;
+		}
+		prStatus->evristic = manhetton(prStatus->field);
+
+		for (size_t i = 0; i < minWay.size(); i++){
+			status* currentStatus = new status(*prStatus, minWay[i]);
+			if (currentStatus->evristic + linealConflicts(currentStatus->field)+i > minWay.size()){
+				for (int k = 0; k < FieldSize; k++){
+					for (int j = 0; j < FieldSize; j++){
+						cout << currentStatus->field[k][j];
+					}
+				}
+			}
+			swap(currentStatus, prStatus);
+			delete currentStatus;
 		}
 	}
 private:
@@ -111,8 +138,25 @@ private:
 			int iOld = nullPlace / FieldSize, jOld = nullPlace%FieldSize;
 
 			evristic = from.evristic + abs((field[i][j] - 1) % FieldSize - j) + abs((field[i][j] - 1) / FieldSize - i)
-				- abs((field[i][j] - 1) % FieldSize - jOld) - abs((field[i][j] - 1) / FieldSize - iOld);
-				//+ linealConflicts(field) - linealConflicts(from.field);
+				- abs((field[i][j] - 1) % FieldSize - jOld) - abs((field[i][j] - 1) / FieldSize - iOld)
+				+ linealConflicts(field) - linealConflicts(from.field);
+		}
+		static int changeLinEvr(status& newStatus, int prevNull){
+			int ch = 0;
+			int nowNull = newStatus.nullPlace;
+			int iNow = prevNull / 3, jNow = prevNull % 3;
+			int iOld = nowNull / 3, jOld = nowNull % 3;
+			if (iOld == iNew){
+				int i = iOld;
+				for (int k = 0; k < FieldSize; k++){
+					if (k != i){
+						if (((newStatus.field[i][jNew] - 1) / FieldSize == i) && (((newStatus.field[i][k] - 1) / FieldSize == i))
+							&& (newStatus.field[i][jNew] * (k - i) > newStatus.field[i][k] * (k - i))) ch -= 2;
+						if (((newStatus.field[i][jNew] - 1) / FieldSize == i) && (((newStatus.field[i][k] - 1) / FieldSize == i))
+							&& (newStatus.field[i][jNew] * (k - i) > newStatus.field[i][j] * (k - i))) ch -= 2;
+					}
+				}
+			}
 		}
 	};
 	struct compare
@@ -137,9 +181,9 @@ private:
 		for (int i = 0; i < FieldSize; i++){
 			for (int j = i+1; j < FieldSize; j++){
 				for (int k = 0; k < FieldSize; k++){
-					if ((field[k][i] / FieldSize == k) && ((field[k][j] / FieldSize == k)) && field[k][i] 
+					if (((field[k][i]-1) / FieldSize == k) && (((field[k][j]-1) / FieldSize == k)) && field[k][i] 
 						&& field[k][j] && (field[k][i] > field[k][j])) evr += 2;
-					if ((field[k][i] % FieldSize == k) && ((field[k][j] % FieldSize == k)) && field[i][k] 
+					if (((field[k][i]-1) % FieldSize == k) && ((field[k][j]-1) % FieldSize == k) && field[i][k] 
 						&& field[j][k] && (field[i][k] > field[j][k])) evr += 2;
 				}
 			}
@@ -151,6 +195,7 @@ private:
 
 int main(){
 	PitnSolver<4> ps(cin);
+	
 	if (ps.doesSolutionExist()){
 		cout << "yes" << endl;
 		vector<char> moves = ps.findSolution();
@@ -161,5 +206,7 @@ int main(){
 	else{
 		cout << "no" << endl;
 	}
+	//vector<char> moves = ps.findSolution();
+	//ps.checkEvristic(moves);
 	return 0;
 }
