@@ -48,7 +48,7 @@ int main(){
 	gr.DeleteVertex(gr.Begin());
 	*/
 	//auto it = gr.Begin();
-	//it.IsValid(); не прокатывает
+	//it.IsValid(); //не прокатывает
 	
 	
 	/*

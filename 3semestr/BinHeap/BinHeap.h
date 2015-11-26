@@ -4,23 +4,31 @@
 
 using namespace std;
 
+template<typename T>
 struct Node{
 	Node(){ child = sibling = parent = nullptr; }
+	Node(int key, T data){
+		child = sibling = parent = nullptr;
+		this->key = key;
+		this->data = data;
+	}
 	~Node(){
 		if (child) delete child;
 		if (sibling) delete sibling;
 	}
-	Node* child;//left son
-	Node* sibling;//next brother
-	Node* parent;
+	Node<T>* child;//left son
+	Node<T>* sibling;//next brother
+	Node<T>* parent;
 	int key;
+	T data;
 	size_t degree;//начиная с 1
 };
 
+template<typename T>
 struct pred
-	: public binary_function<Node*, Node*, bool>
+	: public binary_function<Node<T>*, Node<T>*, bool>
 	{	// functor for operator<
-		bool operator()(const Node* _Left, const Node* _Right) const
+		bool operator()(const Node<T>* _Left, const Node<T>* _Right) const
 		{	// apply operator< to operands
 			if (_Left == nullptr) return false;
 			if (_Right == nullptr) return true;
@@ -28,23 +36,31 @@ struct pred
 		}
 };
 
-bool myCompare(const Node* _Left, const Node* _Right){
+template<typename T>
+bool myCompare(const Node<T>* _Left, const Node<T>* _Right){
 	if (_Left == nullptr) return false;
 	if (_Right == nullptr) return true;
 	return _Left->degree < _Right->degree;
 }
 
+template<typename T>
 class BinHeap{
 private:
-	list<Node*> rootList;
+	list<Node<T>*> rootList;
 	static const int decrease = 1000;
 public:
+	class NodePointer{
+		friend class BinHeap<T>;
+		Node<T>* ptr;
+	};
 	BinHeap(){ rootList.push_back(nullptr); }
 	BinHeap(BinHeap& first){
 		rootList = first.rootList;
 		first.rootList.clear();
 		first.rootList.push_back(nullptr);
 	}
+
+	//вообще говоря ненужный конструктор
 	BinHeap(BinHeap& first, BinHeap& second){
 		auto it = first.rootList.begin();
 		auto jt = second.rootList.begin();
@@ -69,8 +85,8 @@ public:
 			}
 			else{
 				if ((*it)->key > (*jt)->key){
-					Node* root = *jt;
-					Node* child = *it;
+					Node<T>* root = *jt;
+					Node<T>* child = *it;
 					child->parent = root;
 					child->sibling = root->child;
 					root->child = child;
@@ -78,8 +94,8 @@ public:
 					rootList.push_back(root);
 				}
 				else{
-					Node* root = *it;
-					Node* child = *jt;
+					Node<T>* root = *it;
+					Node<T>* child = *jt;
 					child->parent = root;
 					child->sibling = root->child;
 					root->child = child;
@@ -93,8 +109,8 @@ public:
 		while (*jt != nullptr){
 			if (rootList.back()->degree == (*jt)->degree){
 				if (rootList.back()->key > (*jt)->key){
-					Node* root = *jt;
-					Node* child = rootList.back();
+					Node<T>* root = *jt;
+					Node<T>* child = rootList.back();
 					rootList.back() = nullptr;
 					child->parent = root;
 					child->sibling = root->child;
@@ -103,8 +119,8 @@ public:
 					rootList.back() = root;
 				}
 				else{
-					Node* root = rootList.back();
-					Node* child = *jt;
+					Node<T>* root = rootList.back();
+					Node<T>* child = *jt;
 					child->parent = root;
 					child->sibling = root->child;
 					root->child = child;
@@ -119,8 +135,8 @@ public:
 		while (*it != nullptr){
 			if (rootList.back()->degree == (*it)->degree){
 				if (rootList.back()->key > (*it)->key){
-					Node* root = *it;
-					Node* child = rootList.back();
+					Node<T>* root = *it;
+					Node<T>* child = rootList.back();
 					rootList.back() = nullptr;
 					child->parent = root;
 					child->sibling = root->child;
@@ -129,8 +145,8 @@ public:
 					rootList.back() = root;
 				}
 				else{
-					Node* root = rootList.back();
-					Node* child = *it;
+					Node<T>* root = rootList.back();
+					Node<T>* child = *it;
 					child->parent = root;
 					child->sibling = root->child;
 					root->child = child;
@@ -162,7 +178,7 @@ public:
 		}
 		auto it = rootList.begin();
 		auto jt = rhs.rootList.begin();
-		list<Node*> merged;
+		list<Node<T>*> merged;
 		while (*it != nullptr && *jt != nullptr){
 			if (merged.empty() || merged.back()->degree < min((*it)->degree, (*jt)->degree)){
 				if ((*it)->degree < (*jt)->degree){
@@ -185,14 +201,14 @@ public:
 			else{
 				if ((*it)->degree > (*jt)->degree){
 					//merged+rhs-->merged
-					Node* swp = merged.back();
+					Node<T>* swp = merged.back();
 					merged.back() = mergeNodes(*jt, swp);
 					jt++;
 				}
 				else{
 					if ((*it)->degree < (*jt)->degree){
 						//merged+this-->merged
-						Node* swp = merged.back();
+						Node<T>* swp = merged.back();
 						merged.back() = mergeNodes(*it, swp);
 						auto iter = it;
 						it++;
@@ -200,7 +216,7 @@ public:
 					}
 					else{
 						//merged+rhs-->merged
-						Node* swp = merged.back();
+						Node<T>* swp = merged.back();
 						merged.back() = mergeNodes(*jt, swp);
 						jt++; it++;
 					}
@@ -209,7 +225,7 @@ public:
 			
 			if (*it != nullptr){
 				while (!merged.empty() && (*it != nullptr) && (merged.back()->degree == (*it)->degree)){
-					Node* swp = merged.back();
+					Node<T>* swp = merged.back();
 					merged.back() = mergeNodes(*it, swp);
 					auto iter = it;
 					it++;
@@ -218,7 +234,7 @@ public:
 			}
 			if (*jt != nullptr){
 				while (!merged.empty() && (*jt != nullptr) && (merged.back()->degree == (*jt)->degree)){
-					Node* swp = merged.back();
+					Node<T>* swp = merged.back();
 					merged.back() = mergeNodes(*jt, swp);
 					jt++;
 				}
@@ -229,19 +245,22 @@ public:
 			}
 		}
 		rhs.rootList.clear();
-		rootList.merge(merged, myCompare);
+		rootList.merge(merged, myCompare<T>);
 	}
-	void Insert(int key){
-		Node* inserted = new Node();
-		inserted->key = key;
+	NodePointer Insert(int key, T data){
+		Node<T>* inserted = new Node<T>(key, data);
+		NodePointer pointer;
+		pointer.ptr = inserted;
 		inserted->degree = 1;
 		BinHeap ins;
 		ins.rootList.push_front(inserted);
 		Merge(ins);
+		return pointer;
 	}
-	void Decrease(Node* node, int decr = decrease){
+	void Decrease(NodePointer ptr0, int decr = decrease){
+		Node<T>* node = ptr0.ptr;
 		node->key -= decr;
-		Node* ptr = node;
+		Node<T>* ptr = node;
 		if (!ptr->parent){
 			return;
 		}
@@ -250,9 +269,10 @@ public:
 			ptr = ptr->parent;
 		}
 	}
-	void Delete(Node* node){
+	void Delete(NodePointer ptr){
+		Node<T>* node = ptr.ptr;
 		int decr = node->key - Min() + 1;
-		Decrease(node, decr);
+		Decrease(ptr, decr);
 		ExtractMin();
 	}
 	int Min(){
@@ -276,8 +296,8 @@ public:
 		}
 	}
 private:
-	BinHeap(Node* removedRoot){
-		Node* ptr = removedRoot->child;
+	BinHeap(Node<T>* removedRoot){
+		Node<T>* ptr = removedRoot->child;
 		removedRoot->child = nullptr;
 		//delete removedRoot;
 		while (ptr){
@@ -288,9 +308,9 @@ private:
 		}
 		rootList.push_back(nullptr);
 	}
-	static Node* mergeNodes(Node* fst, Node* snd){
-		Node* root;
-		Node* child;
+	static Node<T>* mergeNodes(Node<T>* fst, Node<T>* snd){
+		Node<T>* root;
+		Node<T>* child;
 		if (fst->key > snd->key){
 			root = snd;
 			child = fst;

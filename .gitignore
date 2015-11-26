@@ -1,3 +1,7 @@
 Debug
-.sdf
-.suo
+*.sdf
+*.suo
+*.sln
+*.user
+*.filters
+*.vcxproj

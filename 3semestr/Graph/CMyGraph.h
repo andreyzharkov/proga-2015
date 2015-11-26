@@ -30,7 +30,7 @@ public:
 		CVertexIterator& operator=(const CVertexIterator& iter){ it = iter.it; return *this; }
 		CVertexIterator& operator=(CVertexIterator&& iter){ it = iter.it; return *this; }
 
-		bool IsValid() const{ return it.IsValid(); }
+		bool IsValid() const{ return it.valid(); }
 
 		//нужен для операторов begin&end
 		CVertexIterator(typename set<TVertexId>::iterator iter){
