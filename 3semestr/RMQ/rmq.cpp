@@ -1,4 +1,5 @@
 #include<vector>
+#include<iostream>
 #include<math.h>
 #include<algorithm>
 
@@ -8,7 +9,7 @@ const int INF = INT_MAX;
 
 class RMQ{
 public:
-	RMQ(vector<int>& vect){
+	RMQ(vector<double>& vect){
 		int a = vect.size()/2;
 		k = 0;
 		while (a){
@@ -22,10 +23,10 @@ public:
 			tree[i] = std::min(left(i), right(i));
 		}
 	}
-	int Min(int left, int right){
+	double Min(int left, int right){
 		int n = tree.size() / 2;
 		left += k, right += k;
-		int ans = std::min(tree[left], tree[right]);
+		double ans = std::min(tree[left], tree[right]);
 		while (left <= right)
 		{
 			// если l - правый сын своего родителя, 
@@ -42,22 +43,30 @@ public:
 		return ans;
 	}
 private:
-	int left(int i){ return (2 * i + 1 < tree.size() - 1) ? tree[2 * i + 1] : INF; }
-	int right(int i){ return (2 * i + 2 < tree.size() - 1) ? tree[2 * i + 2] : INF; }
-	vector<int> tree;
+	double left(int i){ return (2 * i + 1 < tree.size() - 1) ? tree[2 * i + 1] : INF; }
+	double right(int i){ return (2 * i + 2 < tree.size() - 1) ? tree[2 * i + 2] : INF; }
+	vector<double> tree;
 	int k;//количество не листов в дереве
 };
 
 int main(){
-	vector<int> v = { 0, 1, 2, 3, 4, 5, 6 };
+	int N, M;
+	cin >> N;
+	vector<double> v;
+	double d;
+	for (int i = 0; i < N; i++){
+		cin >> d;
+		v.push_back(d);
+	}
+	
 	RMQ rmq(v);
-	rmq.Min(0, 5);
-	rmq.Min(0, 1);
-	rmq.Min(0, 3);
-	rmq.Min(0, 2);
-	rmq.Min(1, 4);
-	rmq.Min(0, 5);
-	rmq.Min(5, 5);
-	rmq.Min(2, 3);
+	
+	int a, b;
+	cin >> M;
+	for (int i = 0; i < M; i++){
+		cin >> a >> b;
+		cout << rmq.Min(a, b-1) << endl;
+	}
+	
 	return 0;
 }
