@@ -6,14 +6,14 @@ using namespace std;
 
 template<typename T>
 struct Node{
-	Node(){ child = sibling = parent = nullptr; }
-	Node(int key, T data){
+	Node(){ child = sibling = parent = nullptr; }	//Остались неинициализированные члены класса
+	Node(int key, T data){	//Остались неинициализированные члены класса
 		child = sibling = parent = nullptr;
 		this->key = key;
 		this->data = data;
 	}
 	~Node(){
-		if (child) delete child;
+		if (child) delete child;	//Можно просто delete, удаление нулевого указателя ничего не делает
 		if (sibling) delete sibling;
 	}
 	Node<T>* child;//left son
@@ -21,7 +21,7 @@ struct Node{
 	Node<T>* parent;
 	int key;
 	T data;
-	size_t degree;//������� � 1
+	size_t degree;//íà÷èíàÿ ñ 1
 };
 
 template<typename T>
@@ -47,20 +47,20 @@ template<typename T>
 class BinHeap{
 private:
 	list<Node<T>*> rootList;
-	static const int decrease = 1000;
+	static const int decrease = 1000;	//? непонятно, зачем это нужно
 public:
 	class NodePointer{
 		friend class BinHeap<T>;
 		Node<T>* ptr;
 	};
-	BinHeap(){ rootList.push_back(nullptr); }
+	BinHeap(){ rootList.push_back(nullptr); }	//зачем? не проще ли считать пустой список показателем пустоты
 	BinHeap(BinHeap& first){
 		rootList = first.rootList;
 		first.rootList.clear();
 		first.rootList.push_back(nullptr);
 	}
 
-	//������ ������ �������� �����������
+	//âîîáùå ãîâîðÿ íåíóæíûé êîíñòðóêòîð
 	BinHeap(BinHeap& first, BinHeap& second){
 		auto it = first.rootList.begin();
 		auto jt = second.rootList.begin();
@@ -245,7 +245,7 @@ public:
 			}
 		}
 		rhs.rootList.clear();
-		rootList.merge(merged, myCompare<T>);
+		rootList.merge(merged, myCompare<T>);	//Зачем тут merge? Почему не копирование? А если вдруг найдутся узлы с одинаковой степенью?
 	}
 	NodePointer Insert(int key, T data){
 		Node<T>* inserted = new Node<T>(key, data);
@@ -276,7 +276,7 @@ public:
 		ExtractMin();
 	}
 	int Min(){
-		//�� ���� �������� ���� ����� ��� ������ ����!
+		//íå íàäî âûçûâàòü ýòîò ìåòîä äëÿ ïóñòîé êó÷è!
 		int m = rootList.front()->key;
 		for (auto it = rootList.begin(); *it != nullptr; it++){
 			m = min(m, (*it)->key);
