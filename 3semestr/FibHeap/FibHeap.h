@@ -37,11 +37,14 @@ class FibHeap{
 private:
 	Node<T>* min;
 	int size;
-	static const int dectease = 1000;
+	static const int decrease = 1000;
 public:
 	class NodePointer{
 		friend class FibHeap<T>;
 		Node<T>* ptr;
+	public:
+		int key() const{ return ptr->key; }
+		const T& data() const{ return ptr->data; }
 	};
 	FibHeap(){ size = 0; min = nullptr; }
 	NodePointer Insert(int key, T data){

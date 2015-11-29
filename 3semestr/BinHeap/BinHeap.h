@@ -6,7 +6,6 @@ using namespace std;
 
 template<typename T>
 struct Node{
-	//Node(){ child = sibling = parent = nullptr; }	//Остались неинициализированные члены класса
 	Node(int key, T data){	//исправлено
 		child = sibling = parent = nullptr;
 		this->key = key;
@@ -26,18 +25,6 @@ struct Node{
 };
 
 template<typename T>
-struct pred
-	: public binary_function<Node<T>*, Node<T>*, bool>
-	{	// functor for operator<
-		bool operator()(const Node<T>* _Left, const Node<T>* _Right) const
-		{	// apply operator< to operands
-			if (_Left == nullptr) return false;
-			if (_Right == nullptr) return true;
-			return _Left->degree < _Right->degree;
-		}
-};
-
-template<typename T>
 bool myCompare(const Node<T>* _Left, const Node<T>* _Right){
 	if (_Left == nullptr) return false;
 	if (_Right == nullptr) return true;
@@ -53,6 +40,9 @@ public:
 	class NodePointer{
 		friend class BinHeap<T>;
 		Node<T>* ptr;
+	public:
+		int key() const{ return ptr->key; }
+		const T& data() const{ return ptr->data; }
 	};
 	BinHeap(){ rootList.push_back(nullptr); }	//мне так merge проще писать было.. можно и без этого, конечно, но как-то времени особо нет переделывать
 	BinHeap(BinHeap& first){
@@ -165,6 +155,11 @@ public:
 		first.rootList.push_back(nullptr);
 		second.rootList.push_back(nullptr);
 	}
+	~BinHeap(){
+		for (auto it = rootList.begin(); *it; it++){
+			delete *it;
+		}
+	}
 	BinHeap& operator=(BinHeap& rhs){
 		rootList = rhs.rootList;
 		rhs.rootList.clear();
@@ -222,29 +217,31 @@ public:
 					}
 				}
 			}
-			
-			if (*it != nullptr){
-				while (!merged.empty() && (*it != nullptr) && (merged.back()->degree == (*it)->degree)){
-					Node<T>* swp = merged.back();
-					merged.back() = mergeNodes(*it, swp);
-					auto iter = it;
-					it++;
-					rootList.erase(iter);
-				}
-			}
-			if (*jt != nullptr){
-				while (!merged.empty() && (*jt != nullptr) && (merged.back()->degree == (*jt)->degree)){
-					Node<T>* swp = merged.back();
-					merged.back() = mergeNodes(*jt, swp);
-					jt++;
-				}
-				while (*jt != nullptr){
-					merged.push_back(*jt);
-					jt++;
-				}
+		}
+
+		if (*it != nullptr){
+			while (!merged.empty() && (*it != nullptr) && (merged.back()->degree == (*it)->degree)){
+				Node<T>* swp = merged.back();
+				merged.back() = mergeNodes(*it, swp);
+				auto iter = it;
+				it++;
+				rootList.erase(iter);
 			}
 		}
+		if (*jt != nullptr){
+			while (!merged.empty() && (*jt != nullptr) && (merged.back()->degree == (*jt)->degree)){
+				Node<T>* swp = merged.back();
+				merged.back() = mergeNodes(*jt, swp);
+				jt++;
+			}
+			while (*jt != nullptr){
+				merged.push_back(*jt);
+				jt++;
+			}
+		}
+
 		rhs.rootList.clear();
+		rhs.rootList.push_back(nullptr);
 		rootList.merge(merged, myCompare<T>);	/*Для этого merge и делались все операции выше
 												**В результате предыдущих действий в merged и this все вершины как раз разных степеней
 												**не копирование потому что они не упорядочены в том смысле, что все степени
@@ -268,9 +265,65 @@ public:
 		if (!ptr->parent){
 			return;
 		}
+		Node<T>* lastParent = nullptr;
 		while (ptr->parent && ptr->parent->key > ptr->key){
-			swap(ptr->parent->key, ptr->key);
-			ptr = ptr->parent;
+			Node<T>* parent = ptr->parent;
+			Node<T>* swp = parent;
+
+			if (swp->child != ptr){
+				swp = swp->child;
+				while (swp->sibling != ptr) swp = swp->sibling;
+				swp->sibling = parent;
+			}
+
+			swp = parent->parent;
+			if (swp){
+				if (swp->child == parent) swp->child = ptr;
+				else{
+					swp = swp->child;
+					while (swp->sibling != parent) swp = swp->sibling;
+					swp->sibling = ptr;
+				}
+			}
+
+			if (parent->child != ptr){
+				swp = parent->child;
+				parent->child = ptr->child;
+				ptr->child = swp;
+			}
+			else{
+				parent->child = ptr->child;
+				ptr->child = parent;
+			}
+			swap(parent->sibling, ptr->sibling);
+			ptr->parent = parent->parent;
+			parent->parent = ptr;
+			swap(ptr->degree, parent->degree);
+
+			swp = ptr->child;
+			while (swp->sibling){
+				swp->parent = ptr;
+				swp = swp->sibling;
+			}
+			swp->parent = ptr;
+			
+			swp = parent->child;
+			if (swp){
+				while (swp->sibling){
+					swp->parent = parent;
+					swp = swp->sibling;
+				}
+				swp->parent = parent;
+			}
+			lastParent = parent;
+		}
+		if (ptr->parent == nullptr){
+			for (auto it = rootList.begin(); *it != nullptr; it++){
+				if (*it == lastParent){
+					*it = ptr;
+					return;
+				}
+			}
 		}
 	}
 	void Delete(NodePointer ptr){

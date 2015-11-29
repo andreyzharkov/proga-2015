@@ -1,135 +1,170 @@
-#include<boost\heap\fibonacci_heap.hpp>
 #include"FibHeap.h"
+#include<map>
+
+using std::map;
 
 #define BOOST_TEST_MAIN
-#include<boost\test\unit_test.hpp>
+#include<boost\test\included\unit_test.hpp>
+
+void initIncrease(FibHeap<int>& bh, map<int, int>& m, int start, size_t count){
+	for (int i = 0; i < count; i++){
+		m[i] = start + i;
+		bh.Insert(start + i, start + i);
+	}
+}
+
+void initDecrease(FibHeap<int>& bh, map<int, int>& m, int start, size_t count){
+	for (int i = count + start; i > start; i--){
+		m[i] = i;
+		bh.Insert(i, i);
+	}
+}
+
+void initRandom(FibHeap<int>& bh, map<int, int>& m, size_t count){
+	int rnd;
+	for (int i = 0; i < count; i++){
+		rnd = rand();
+		if (m.find(rnd) == m.end()){
+			m[rnd] = rnd;
+			bh.Insert(rnd, rnd);
+		}
+	}
+}
 
 BOOST_AUTO_TEST_CASE(Insert)
 {
 	FibHeap<int> myHeap;
-	boost::heap::fibonacci_heap<int> boostHeap;
-	
-	for (int i = 0; i < 50; i++){
-		myHeap.Insert(i, i);
-		boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
+	map<int, int> m;
+
+	int count = 100;
+	int start = 0;
+	for (int i = 0; i < count; i++){
+		m[i] = start + i;
+		myHeap.Insert(start + i, start + i);
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "insertion failed");
 	}
-	for (int i = 0; i < 100000; i++){
-		myHeap.Insert(50 + rand() % 67890, -i);
-		boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
+
+	start = 500;
+	for (int i = count + start; i > start; i--){
+		m[i] = i;
+		myHeap.Insert(i, i);
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "insertion failed");
+	}
+
+	int rnd;
+	for (int i = 0; i < count; i++){
+		rnd = rand();
+		if (m.find(rnd) == m.end()){
+			m[rnd] = rnd;
+			myHeap.Insert(rnd, rnd);
+			BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "insertion failed");
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE(Merge){
+	FibHeap<int> myHeap, merged;
+
+	map<int, int> m, m_merged;
+	int count = 5 + rand() % 500;
+	for (int i = 0; i < count; i++){
+		switch (rand() % 5){
+		case 0: initDecrease(merged, m_merged, i*count, rand() % 50);
+			break;
+		case 1: initIncrease(merged, m_merged, i*count, rand() % 50);
+			break;
+		default: initRandom(merged, m_merged, rand() % 50);
+		}
+		myHeap.Merge(merged);
+		m.insert(m_merged.begin(), m_merged.end());
+		m_merged.clear();
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "merge failed");
 	}
 }
 
 BOOST_AUTO_TEST_CASE(ExtractMin){
 	FibHeap<int> myHeap;
-	boost::heap::fibonacci_heap<int> boostHeap;
-
-	for (int i = 0; i < 50; i++){
-		myHeap.Insert(i, i);
-		boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
-	}
-	for (int i = 0; i < 100000; i++){
-		myHeap.Insert(50 + rand() % 67890, -i);
-		boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
-	}
-	for (int i = 0; i < 100050; i++){
+	map<int, int> m;
+	int count = 1 + rand() % 5000;
+	initIncrease(myHeap, m, 1000, count);
+	for (int i = 0; i < count - 1; i++){
 		myHeap.ExtractMin();
-		boostHeap.pop();
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "extraction min failed");
+		m.erase(m.begin());
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "extracted min failed");
 	}
-}
+	myHeap.ExtractMin();
+	m.erase(m.begin());
 
-BOOST_AUTO_TEST_CASE(Merge){
-	FibHeap<int> myHeap;
-	boost::heap::fibonacci_heap<int> boostHeap;
-
-	for (int i = 0; i < 50; i++){
-		myHeap.Insert(i, i);
-		boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
+	initDecrease(myHeap, m, 1000, count);
+	for (int i = 0; i < count - 1; i++){
+		myHeap.ExtractMin();
+		m.erase(m.begin());
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "extracted min failed");
 	}
-	for (int i = 0; i < 50; i++){
-		int mergedHeapSize = 0;
-		FibHeap<int> mergedHeap;
-		for (int j = 0; j < mergedHeapSize; j++){
-			int f = rand(), s = rand();
-			mergedHeap.Insert(f, s);
-			boostHeap.emplace(f, s);
-			BOOST_CHECK_MESSAGE(mergedHeap.Min() == boostHeap.top(), "insertion failed");
-		}
-		if (i % 2){
-			mergedHeap.ExtractMin();
-			mergedHeapSize++;
-		}
-		myHeap.Merge(mergedHeap);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "merge failed");
+	myHeap.ExtractMin();
+	m.erase(m.begin());
+
+	initRandom(myHeap, m, count);
+	for (int i = 0; i < count - 10; i++){
+		myHeap.ExtractMin();
+		m.erase(m.begin());
+		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "extracted min failed");
 	}
 }
 
 BOOST_AUTO_TEST_CASE(Decrease){
-	boost::heap::fibonacci_heap<int> boostHeap;
-
-	boost::heap::fibonacci_heap<int>::handle_type boostPtr[10000];
-	FibHeap<int>::NodePointer ptr[10000];
+	const int count = 1000;
+	FibHeap<int>::NodePointer ptr[count];
+	map<int, int>::iterator it[count];
 
 	FibHeap<int> myHeap;
-	for (int i = 0; i < 1000; i++){
-		ptr[i] = myHeap.Insert(i, i);
-		boostPtr[i] = boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
-	}
-	for (int i = 1000; i < 10000; i++){
-		int rnd = rand() % 67890;
-		ptr[i] = myHeap.Insert(1000 + rnd, -i);
-		boostPtr[i] = boostHeap.emplace(1000 + rnd, -i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
-	}
-	for (int i = 0; i < 9999; i++){
-		int j = rand() % 10000;
-		myHeap.Decrease(ptr[j], 1000);
-		boostHeap.decrease(boostPtr[j], 1000);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "decreasing node failed");
+	map<int, int> m;
+
+	for (int j = 0; j < 100; j++){
+		for (int i = 0; i < count * 2; i++){
+			if (i < count){
+				m[i] = i;
+				it[i] = m.find(i);
+				ptr[i] = myHeap.Insert(i, i);
+			}
+			else{
+				m[i] = i;
+				myHeap.Insert(i, i);
+			}
+		}
+		for (int i = count - 1; i >= 0; i++){
+			myHeap.Decrease(ptr[i]);
+			m[ptr[i].key() - 1000] = ptr[i].data();
+			m.erase(it[i]);
+			BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "decrease failed");
+		}
 	}
 }
 
 BOOST_AUTO_TEST_CASE(Delete){
-	boost::heap::fibonacci_heap<int> boostHeap;
-
-	boost::heap::fibonacci_heap<int>::handle_type boostPtr[10000];
-	FibHeap<int>::NodePointer ptr[10000];
+	const int count = 1000;
+	FibHeap<int>::NodePointer ptr[count];
+	map<int, int>::iterator it[count];
 
 	FibHeap<int> myHeap;
-	for (int i = 0; i < 1000; i++){
-		ptr[i] = myHeap.Insert(i, i);
-		boostPtr[i] = boostHeap.emplace(i, i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
+	map<int, int> m;
+
+	for (int j = 0; j < 100; j++){
+		for (int i = 0; i < count * 2; i++){
+			if (i < count){
+				m[i] = i;
+				it[i] = m.find(i);
+				ptr[i] = myHeap.Insert(i, i);
+			}
+			else{
+				m[i] = i;
+				myHeap.Insert(i, i);
+			}
+		}
+		for (int i = count - 1; i >= 0; i++){
+			myHeap.Decrease(ptr[i]);
+			m.erase(it[i]);
+			BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "deletion failed");
+		}
 	}
-	for (int i = 1000; i < 10000; i++){
-		int rnd = rand() % 67890;
-		ptr[i] = myHeap.Insert(1000 + rnd, -i);
-		boostPtr[i] = boostHeap.emplace(1000 + rnd, -i);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "insertion failed");
-	}
-	for (int i = 0; i < 9; i++){
-		myHeap.Delete(ptr[i]);
-		boostHeap.erase(boostPtr[i]);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "delete operation node failed");
-	}
-	for (int i = 100; i < 900; i++){
-		myHeap.Delete(ptr[i]);
-		boostHeap.erase(boostPtr[i]);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "delete operation node failed");
-	}
-	for (int i = 6000; i < 9999; i++){
-		myHeap.Delete(ptr[i]);
-		boostHeap.erase(boostPtr[i]);
-		BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "delete operation node failed");
-	}
-	int i = 10;
-	myHeap.Delete(ptr[i]);
-	boostHeap.erase(boostPtr[i]);
-	BOOST_CHECK_MESSAGE(myHeap.Min() == boostHeap.top(), "delete operation node failed");
 }
