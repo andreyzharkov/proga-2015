@@ -6,11 +6,12 @@ using namespace std;
 
 template<typename T>
 struct Node{
-	Node(){ child = sibling = parent = nullptr; }	//Остались неинициализированные члены класса
-	Node(int key, T data){	//Остались неинициализированные члены класса
+	//Node(){ child = sibling = parent = nullptr; }	//Остались неинициализированные члены класса
+	Node(int key, T data){	//исправлено
 		child = sibling = parent = nullptr;
 		this->key = key;
 		this->data = data;
+		degree = 1;
 	}
 	~Node(){
 		if (child) delete child;	//Можно просто delete, удаление нулевого указателя ничего не делает
@@ -21,7 +22,7 @@ struct Node{
 	Node<T>* parent;
 	int key;
 	T data;
-	size_t degree;//íà÷èíàÿ ñ 1
+	size_t degree;//начиная с 1
 };
 
 template<typename T>
@@ -47,20 +48,19 @@ template<typename T>
 class BinHeap{
 private:
 	list<Node<T>*> rootList;
-	static const int decrease = 1000;	//? непонятно, зачем это нужно
+	static const int decrease = 1000;	//это значение по умолчанию для Decrease
 public:
 	class NodePointer{
 		friend class BinHeap<T>;
 		Node<T>* ptr;
 	};
-	BinHeap(){ rootList.push_back(nullptr); }	//зачем? не проще ли считать пустой список показателем пустоты
+	BinHeap(){ rootList.push_back(nullptr); }	//мне так merge проще писать было.. можно и без этого, конечно, но как-то времени особо нет переделывать
 	BinHeap(BinHeap& first){
 		rootList = first.rootList;
 		first.rootList.clear();
 		first.rootList.push_back(nullptr);
 	}
-
-	//âîîáùå ãîâîðÿ íåíóæíûé êîíñòðóêòîð
+	//вообще говоря лишний конструктор
 	BinHeap(BinHeap& first, BinHeap& second){
 		auto it = first.rootList.begin();
 		auto jt = second.rootList.begin();
@@ -245,7 +245,11 @@ public:
 			}
 		}
 		rhs.rootList.clear();
-		rootList.merge(merged, myCompare<T>);	//Зачем тут merge? Почему не копирование? А если вдруг найдутся узлы с одинаковой степенью?
+		rootList.merge(merged, myCompare<T>);	/*Для этого merge и делались все операции выше
+												**В результате предыдущих действий в merged и this все вершины как раз разных степеней
+												**не копирование потому что они не упорядочены в том смысле, что все степени
+												**merged >(или меньше) степеней из this
+												*/
 	}
 	NodePointer Insert(int key, T data){
 		Node<T>* inserted = new Node<T>(key, data);
@@ -276,7 +280,8 @@ public:
 		ExtractMin();
 	}
 	int Min(){
-		//íå íàäî âûçûâàòü ýòîò ìåòîä äëÿ ïóñòîé êó÷è!
+		//будет ошибка если вызвать для пустой кучи!
+		//тут exeption кидать или как?
 		int m = rootList.front()->key;
 		for (auto it = rootList.begin(); *it != nullptr; it++){
 			m = min(m, (*it)->key);
