@@ -14,8 +14,8 @@ struct Node{
 		degree = 1;
 	}
 	~Node(){
-		if (child) delete child;	//Можно просто delete, удаление нулевого указателя ничего не делает
-		if (sibling) delete sibling;
+		delete child;
+		delete sibling;
 	}
 	Node<T>* child;//left son
 	Node<T>* sibling;//next brother
