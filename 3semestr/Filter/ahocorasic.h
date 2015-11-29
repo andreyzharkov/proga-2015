@@ -3,6 +3,7 @@
 #include<map>
 #include<string>
 #include<fstream>
+#include<iostream>
 
 using namespace std;
 
@@ -102,8 +103,10 @@ public:
 			{
 				current_node = iter->second;
 
-				if (current_node->out >= 0)
+				if (current_node->out >= 0){
 					callback(formatted, pos - words[current_node->out].length(), pos - 1);
+					current_node = &root;
+				}
 			}
 		}
 	}
@@ -121,48 +124,44 @@ private:
 	vector<string> words;
 };
 
-class Filter{
-public:
-	Filter(string input, string stopwords, string output){
-		is = ifstream(input);
-		os = ofstream(output);
-		ifstream stop(stopwords);
-		string str;
-		while (!stop.eof()){
-			getline(stop, str);
-			if (str.length() > 0) aho.AddString(str);
-		}
-		aho.Init();
-		count = 0;
-		currStrNumber = 0;
-		//bool isFirst = true;
-		while (!is.eof()){
-			getline(is, str);
-			aho.Search(str, filter);
-			//if (!isFirst) os << endl;
-			os << str;
-			currStrNumber++;
-		}
-		for (int i = 0; i < count; i++){
-			cout << i + 1 << ". (" << firstCoordinates[i].first << ", "
-				<< firstCoordinates[i].second << ")" << endl;
-		}
+const int countRemembered = 10;
+int currCount;
+int currStrNumber;
+pair<int, int> firstCoordinates[countRemembered];
+
+inline void bedaub(string& str, int beg, int end){
+	for (int i = beg; i <= end; i++) str[i] = '*';
+	if (currCount < countRemembered){
+		firstCoordinates[currCount].first = currStrNumber;
+		firstCoordinates[currCount].second = beg;
+		currCount++;
 	}
-private:
+}
+
+void filter(string input, string stopwords, string output){
+	ifstream is(input);
+	ofstream os(output);
+	ifstream stop(stopwords);
+	string str;
 	AhoCorasick aho;
-	ifstream is;
-	ofstream os;
-public:
-	static const int countRemembered = 10;
-	static int count;
-	static int currStrNumber;
-	static pair<int, int> firstCoordinates[countRemembered];
-	static inline void filter(string& str, int beg, int end){
-		for (int i = beg; i < end; i++) str[i] = '*';
-		if (count < countRemembered){
-			firstCoordinates[count].first = currStrNumber;
-			firstCoordinates[count].second = beg;
-			count++;
-		}
+	while (!stop.eof()){
+		getline(stop, str);
+		if (str.length() > 0) aho.AddString(str);
 	}
-};
+	aho.Init();
+	currCount = 0;
+	currStrNumber = 0;
+	bool isFirst = true;
+	while (!is.eof()){
+		getline(is, str);
+		aho.Search(str, bedaub);
+		if (!isFirst) os << endl;
+		os << str;
+		currStrNumber++;
+		isFirst = false;
+	}
+	for (int i = 0; i < currCount; i++){
+		cout << i + 1 << ". (" << firstCoordinates[i].first << ", "
+			<< firstCoordinates[i].second << ")" << endl;
+	}
+}
