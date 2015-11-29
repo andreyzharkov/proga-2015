@@ -8,7 +8,7 @@ using std::map;
 
 void initIncrease(FibHeap<int>& bh, map<int, int>& m, int start, size_t count){
 	for (int i = 0; i < count; i++){
-		m[i] = start + i;
+		m[start+i] = start + i;
 		bh.Insert(start + i, start + i);
 	}
 }
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(ExtractMin){
 	m.erase(m.begin());
 
 	initRandom(myHeap, m, count);
-	for (int i = 0; i < count - 10; i++){
+	for (int i = 0; i < count - 100; i++){
 		myHeap.ExtractMin();
 		m.erase(m.begin());
 		BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "extracted min failed");
@@ -132,9 +132,9 @@ BOOST_AUTO_TEST_CASE(Decrease){
 				myHeap.Insert(i, i);
 			}
 		}
-		for (int i = count - 1; i >= 0; i++){
+		for (int i = count - 1; i >= 0; i--){
 			myHeap.Decrease(ptr[i]);
-			m[ptr[i].key() - 1000] = ptr[i].data();
+			m[(*it[i]).first - 1000] = (*it[i]).second;
 			m.erase(it[i]);
 			BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "decrease failed");
 		}
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(Delete){
 				myHeap.Insert(i, i);
 			}
 		}
-		for (int i = count - 1; i >= 0; i++){
-			myHeap.Decrease(ptr[i]);
+		for (int i = count - 1; i > 0; i--){
+			myHeap.Delete(ptr[i]);
 			m.erase(it[i]);
 			BOOST_CHECK_MESSAGE(myHeap.Min() == (*m.begin()).first, "deletion failed");
 		}

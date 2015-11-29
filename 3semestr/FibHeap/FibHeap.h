@@ -47,6 +47,9 @@ public:
 		const T& data() const{ return ptr->data; }
 	};
 	FibHeap(){ size = 0; min = nullptr; }
+	~FibHeap(){
+		delete min;
+	}
 	NodePointer Insert(int key, T data){
 		FibHeap fh;
 		NodePointer ptr;
@@ -115,6 +118,7 @@ public:
 				parent = node;
 			}
 		}
+		if (node->key < min->key) min = node;
 	}
 	void Delete(NodePointer ptr){
 		Node<T>* node = ptr.ptr;
@@ -148,6 +152,7 @@ private:
 			else{
 				first->child = second;
 			}
+			second->parent = first;
 			first->degree++;
 			return first;
 		}
@@ -158,6 +163,7 @@ private:
 			else{
 				second->child = first;
 			}
+			first->parent = second;
 			second->degree++;
 			return second;
 		}
