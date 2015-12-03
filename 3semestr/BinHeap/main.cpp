@@ -28,6 +28,12 @@ void initRandom(BinHeap<int>& bh, map<int, int>& m, size_t count){
 	}
 }
 
+BOOST_AUTO_TEST_CASE(check){
+	BinHeap<int> myHeap;
+	BinHeap<int>::NodePointer ptr = myHeap.Insert(10, 10);
+	myHeap.Delete(ptr);
+}
+
 BOOST_AUTO_TEST_CASE(Insert)
 {
 	BinHeap<int> myHeap;

@@ -346,7 +346,7 @@ public:
 		for (auto it = rootList.begin(); it != rootList.end(); it++){
 			if ((*it)->key == m){
 				BinHeap bh(*it);
-				*it = nullptr;
+				delete *it;
 				rootList.erase(it);
 				Merge(bh);
 				return;
