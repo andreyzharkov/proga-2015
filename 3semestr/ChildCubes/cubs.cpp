@@ -35,12 +35,9 @@ public:
 		query = str;
 		letToSink.clear();
 		for (int i = 0; i < str.length(); i++){
-			try{
-				letToSink.at(str[i])++;
-			}
-			catch (out_of_range ex){
-				letToSink[str[i]] = 1;
-			}
+			if (letToSink.find(str[i]) != letToSink.end())
+				letToSink[str[i]]++;
+			else letToSink[str[i]] = 1;
 		}
 		wasSolutionFound = false;
 		wasSolutionSearched = false;
@@ -165,7 +162,7 @@ int main(){
 	solver.AddKube("ABC");
 	solver.AddKube("AB");
 	solver.AddKube("A");
-	solver.ChangeSourseWord("ABCDEFGHIJ");
+	solver.ChangeSourseWord("ABCDEFGHIJKK");
 	solver.FindSolution();
 	solver.PrintSolution();
 	return 0;
