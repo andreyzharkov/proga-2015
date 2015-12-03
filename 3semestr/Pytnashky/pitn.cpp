@@ -44,9 +44,10 @@ public:
 		
 		queue.push(startStatus);
 		checkedPositions.insert(startStatus.field);
-		if (checkedPositions.end() == checkedPositions.find(status(status(startStatus, 'd'), 'u').field)){
+		//это я что-то проверял, забыл закомментить
+		/*if (checkedPositions.end() == checkedPositions.find(status(status(startStatus, 'd'), 'u').field)){
 			cout << "ok" << endl;
-		}
+		}*/
 		status currentPosition;
 		
 		while (true){
