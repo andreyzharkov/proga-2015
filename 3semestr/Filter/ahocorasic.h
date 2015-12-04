@@ -4,43 +4,27 @@
 #include<string>
 #include<fstream>
 #include<iostream>
+#include<memory>
 
 using namespace std;
 
 class AhoCorasick{
 public:
 	typedef void(*Callback) (string& str, int beg, int end);
-
-	~AhoCorasick()
-	{
-		queue<BorNode*> q;
-		for (map<char, BorNode*>::const_iterator iter = root.links.begin();
-			iter != root.links.end(); ++iter)
-			q.push(iter->second);
-		while (!q.empty())
-		{
-			BorNode* current_node = q.front();
-			q.pop();
-			for (map<char, BorNode*>::const_iterator iter = current_node->links.begin();
-				iter != current_node->links.end(); ++iter)
-				q.push(iter->second);
-			delete current_node;
-		}
-	}
+	AhoCorasick() : root(new BorNode){}
 	//добавление строки в бор
 	void AddString(const string& str)
 	{
-		BorNode* node = &root;
+		shared_ptr<BorNode> node(root);
 		for (int i = 0; i < str.size(); ++i)
 		{
-			map<char, BorNode*>::iterator iter = node->links.find(str[i]);
+			map<char, shared_ptr<BorNode>>::iterator iter = node->links.find(str[i]);
 			if (iter != node->links.end())
 				node = iter->second;
 			else
 			{
-				BorNode* new_node = new BorNode;
-				node->links[str[i]] = new_node;
-				node = new_node;
+				node->links[str[i]] = shared_ptr<BorNode>(new BorNode);
+				node = node->links[str[i]];
 			}
 		}
 		node->out = words.size();
@@ -49,78 +33,64 @@ public:
 	//строим из бора автомат
 	void Init()
 	{
-		root.fail = &root;
-		queue<BorNode*> q;
-		q.push(&root);
+		root->parent = root;
+		queue<shared_ptr<BorNode>> q;
+		q.push(shared_ptr<BorNode>(root));
 		while (!q.empty())
 		{
-			BorNode* current_node = q.front();
+			shared_ptr<BorNode> current_node = q.front();
 			q.pop();
-			for (map<char, BorNode*>::const_iterator iter = current_node->links.begin();
+			for (map<char, shared_ptr<BorNode>>::const_iterator iter = current_node->links.begin();
 				iter != current_node->links.end(); ++iter)
 			{
-				BorNode* child = iter->second;
-				char symb = iter->first;
+				shared_ptr<BorNode> child(iter->second);
+				child->parent = current_node;
 				q.push(child);
-
-				BorNode* parent_fail = current_node->fail;
-				while (true)
-				{
-					map<char, BorNode*>::const_iterator it = parent_fail->links.find(symb);
-					if (it != parent_fail->links.end())
-					{
-						child->fail = it->second != child ? it->second : &root;
-						if (child->out < 0)
-							child->out = child->fail->out;
-						break;
-					}
-					if (parent_fail == &root)
-					{
-						child->fail = &root;
-						break;
-					}
+			}
+			
+			for (char c = 'a'; c != 'z'; c++){
+				if (current_node->links.find(c) == current_node->links.end()){
+					if (current_node == root)
+						current_node->links[c] = root;
 					else
-						parent_fail = parent_fail->fail;
+						current_node->links[c] = current_node->parent->links[c];
 				}
 			}
+
+			current_node->parent = nullptr;
 		}
 	}
 	void Search(string& formatted, Callback callback)
 	{
 		const char* str = formatted.c_str();
-		BorNode* current_node = &root;
+		shared_ptr<BorNode> current_node = root;
 		for (int pos = 1; *str; ++str, ++pos)
 		{
-			map<char, BorNode*>::const_iterator iter = current_node->links.find(*str);
-			while (iter == current_node->links.end())
+			map<char, shared_ptr<BorNode>>::const_iterator iter = current_node->links.find(tolower(*str));
+			if (iter == current_node->links.end())
 			{
-				current_node = current_node->fail;
-				iter = current_node->links.find(*str);
-				if (current_node == current_node->fail)
-					break;
+				current_node = root;
+				continue;
 			}
-			if (iter != current_node->links.end())
-			{
-				current_node = iter->second;
+			current_node = iter->second;
 
-				if (current_node->out >= 0){
-					callback(formatted, pos - words[current_node->out].length(), pos - 1);
-					current_node = &root;
-				}
+			if (current_node->out >= 0){
+				callback(formatted, pos - words[current_node->out].length(), pos - 1);
+				current_node = root;
 			}
 		}
 	}
 private:
 	struct BorNode
 	{
-		BorNode() : fail(NULL), out(-1) {}
-
-		map<char, BorNode*> links;//можно enum чаров, если хотим уменьшить затраты памяти
-		BorNode* fail;
+		BorNode() : parent(), out(-1) {}
+		
+		map<char, shared_ptr<BorNode>> links;//можно enum чаров, если хотим уменьшить затраты памяти
+		shared_ptr<BorNode> parent;//используется только при инициализации
 		int out;//номер строки, которой соответствует или -1
 	};
 
-	BorNode root;
+	shared_ptr<BorNode> root;
 	vector<string> words;
 };
 
