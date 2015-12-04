@@ -1,4 +1,4 @@
-#include<vector>
+п»ї#include<vector>
 #include<queue>
 #include<map>
 #include<string>
@@ -12,7 +12,7 @@ class AhoCorasick{
 public:
 	typedef void(*Callback) (string& str, int beg, int end);
 	AhoCorasick() : root(new BorNode){}
-	//добавление строки в бор
+	//РґРѕР±Р°РІР»РµРЅРёРµ СЃС‚СЂРѕРєРё РІ Р±РѕСЂ
 	void AddString(const string& str)
 	{
 		shared_ptr<BorNode> node(root);
@@ -30,7 +30,7 @@ public:
 		node->out = words.size();
 		words.push_back(str);
 	}
-	//строим из бора автомат
+	//СЃС‚СЂРѕРёРј РёР· Р±РѕСЂР° Р°РІС‚РѕРјР°С‚
 	void Init()
 	{
 		root->parent = root;
@@ -85,9 +85,9 @@ private:
 	{
 		BorNode() : parent(), out(-1) {}
 		
-		map<char, shared_ptr<BorNode>> links;//можно enum чаров, если хотим уменьшить затраты памяти
-		shared_ptr<BorNode> parent;//используется только при инициализации
-		int out;//номер строки, которой соответствует или -1
+		map<char, shared_ptr<BorNode>> links;//РјРѕР¶РЅРѕ enum С‡Р°СЂРѕРІ, РµСЃР»Рё С…РѕС‚РёРј СѓРјРµРЅСЊС€РёС‚СЊ Р·Р°С‚СЂР°С‚С‹ РїР°РјСЏС‚Рё
+		shared_ptr<BorNode> parent;//РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
+		int out;//РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё, РєРѕС‚РѕСЂРѕР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ РёР»Рё -1
 	};
 
 	shared_ptr<BorNode> root;
