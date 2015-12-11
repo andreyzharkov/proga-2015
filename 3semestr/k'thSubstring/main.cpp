@@ -10,8 +10,9 @@ int main(){
 	int N, k;
 	std::cin >> N;
 	for (int i = 1; i <= N; i++){
-		//std::cin >> k;
-		std::cout << "substr[" << i << "]=" << solver.GetkthSubstring(i) << std::endl;
+		std::cin >> k;
+		std::cout << solver.GetkthSubstring(k) << std::endl;
+		//std::cout << "substr[" << i << "]=" << solver.GetkthSubstring(i) << std::endl;
 	}
 	return 0;
 }

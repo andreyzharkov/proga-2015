@@ -51,9 +51,13 @@ public:
 			for (char c = 'a'; c != 'z'; c++){
 				if (current_node->links.find(c) == current_node->links.end()){
 					if (current_node == root)
-						current_node->links[c] = root;
-					else
-						current_node->links[c] = current_node->parent->links[c];
+						current_node->fail_links[c] = root;
+					else{
+						if (current_node->parent->links.find(c) != current_node->parent->links.end())
+							current_node->fail_links[c] = current_node->parent->links[c];
+						else
+							current_node->fail_links[c] = current_node->parent->fail_links[c];
+					}
 				}
 			}
 
@@ -69,8 +73,19 @@ public:
 			map<char, shared_ptr<BorNode>>::const_iterator iter = current_node->links.find(tolower(*str));
 			if (iter == current_node->links.end())
 			{
-				current_node = root;
-				continue;
+				map<char, weak_ptr<BorNode>>::const_iterator iter = current_node->fail_links.find(tolower(*str));
+				if (iter == current_node->fail_links.end()){
+					current_node = root;
+					continue;
+				}
+				else{
+					current_node = iter->second.lock();
+					if (current_node->out >= 0){
+						callback(formatted, pos - words[current_node->out].length(), pos - 1);
+						current_node = root;
+					}
+					continue;
+				}
 			}
 			current_node = iter->second;
 
@@ -86,6 +101,7 @@ private:
 		BorNode() : parent(), out(-1) {}
 		
 		map<char, shared_ptr<BorNode>> links;//можно enum чаров, если хотим уменьшить затраты памяти
+		map<char, weak_ptr<BorNode>> fail_links;
 		shared_ptr<BorNode> parent;//используется только при инициализации
 		int out;//номер строки, которой соответствует или -1
 	};

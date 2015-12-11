@@ -70,14 +70,14 @@ private:
 		if (ways[pos]) return ways[pos];
 		if (!states[pos].next.size()) return ways[pos] = 1;
 		ways[pos] = 1;
-		for (auto it = states[pos].next.begin(); it != states[pos].next.end(); it++){
+		for (map<char, int>::iterator it = states[pos].next.begin(); it != states[pos].next.end(); it++){
 			ways[pos] += count_ways(it->second);
 		}
 		return ways[pos];
 	}
 	string getLexSubstrRest(size_t pos, int k){
 		if (k == 0) return "";
-		for (auto it = states[pos].next.begin(); it != states[pos].next.end(); it++){
+		for (map<char, int>::iterator it = states[pos].next.begin(); it != states[pos].next.end(); it++){
 			if (ways[it->second] < k) k -= ways[it->second];
 			else return it->first + getLexSubstrRest(it->second, k - 1);
 		}
